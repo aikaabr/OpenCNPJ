@@ -1,6 +1,6 @@
 <img src="./Page/assets/logo.svg" alt="OpenCNPJ" height="64" />
 
-Projeto aberto para baixar, processar e publicar dados públicos do CNPJ, com uma página simples para consulta.
+Projeto aberto para baixar, processar e publicar dados públicos das empresas do Brasil.
 
 ## Pastas
 
@@ -11,25 +11,24 @@ Projeto aberto para baixar, processar e publicar dados públicos do CNPJ, com um
 
 - `.NET SDK 9.0+`
 - `rclone` instalado e autenticado no seu storage (ex.: Backblaze, R2, S3, Azure Storage, ...).
-  - Dica: configure um remote no `rclone` e, se quiser, defina a variável `RCLONE_REMOTE` para sobrescrever o destino padrão.
 - Espaço em disco e boa conexão (a primeira execução pode levar tempo -- dias até).
 
-## Configuração (opcional)
+## Configuração
 
 - Ajuste `ETL/config.json` se desejar mudar pastas locais, destino do storage, memória, paralelismo... 
-- Você pode definir `RCLONE_REMOTE=MeuRemote:bucket/prefix` para apontar para outro remote.
+- No `config.json`, aponte para o Storage que deseja passando a configuração do rclone.
 
-## Pipeline
+## Execução
 
 - Dentro de `ETL`:
-  - `dotnet run -- pipeline`
-  - `dotnet run -- pipeline -m YYYY-MM` (opcional)
+  - `dotnet run pipeline`
+  - `dotnet run pipeline -m YYYY-MM` (opcional)
 
 Outros comandos úteis (opcionais):
 
-- `dotnet run -- zip`: gera um ZIP consolidado local.
-- `dotnet run -- test`: roda teste simples de integridade.
-- `dotnet run -- single --cnpj 00000000000191`: processa um CNPJ específico.
+- `dotnet run zip`: gera um ZIP consolidado local.
+- `dotnet run test`: roda teste simples de integridade.
+- `dotnet run single --cnpj 00000000000191`: processa um CNPJ específico.
 
 ## Contribuição
 
