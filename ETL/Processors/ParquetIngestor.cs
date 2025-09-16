@@ -118,6 +118,23 @@ public class ParquetIngestor : IDisposable
                         continue;
                     }
 
+                    // Verifica existência prévia dos Parquet para pular processamento
+                    var parquetPath = Path.Combine(_parquetDir, $"{tableName}.parquet");
+                    var partitionedDir = Path.Combine(_parquetDir, tableName);
+
+                    var isPartitioned = new[] { "estabelecimento", "empresa", "simples", "socio" }.Contains(tableName);
+                    var parquetAlreadyExists = isPartitioned
+                        ? Directory.Exists(partitionedDir) && Directory
+                            .EnumerateFiles(partitionedDir, "*.parquet", SearchOption.AllDirectories).Any()
+                        : File.Exists(parquetPath);
+
+                    if (parquetAlreadyExists)
+                    {
+                        task.Description = $"[blue]Pulando {tableName}: Parquet já existe[/]";
+                        task.Value = task.MaxValue;
+                        continue;
+                    }
+
                     task.MaxValue = files.Length;
                     await ConvertTableToParquet(tableName, files, columns, task);
                 }
@@ -234,14 +251,6 @@ public class ParquetIngestor : IDisposable
         AnsiConsole.MarkupLine("[green]🎉 Export + upload integrado concluído![/]");
     }
 
-    public async Task ExportToNdjson(string outputDir = "cnpj_ndjson")
-    {
-        Directory.CreateDirectory(outputDir);
-        AnsiConsole.MarkupLine("[cyan]Carregando tabelas Parquet para memória...[/]");
-        await LoadParquetTablesForConnection(_connection);
-        await ExportToNdjsonPartitioned(outputDir);
-    }
-
     private async Task LoadParquetTablesForConnection(DuckDBConnection connection)
     {
         var tableConfigs = new Dictionary<string, string>
@@ -336,15 +345,18 @@ public class ParquetIngestor : IDisposable
                             prefixTask.StopTask();
                         }
 
-                        AnsiConsole.WriteException(ex);
+                        AnsiConsole.WriteException(ex, new ExceptionSettings
+                        {
+                            Format = ExceptionFormats.ShortenEverything,
+                            
+                        });
+
                         mainTask.Increment(1);
                     }
                 });
-
-                // Faz upload do banco de hashes apenas no final de todo o processamento
-                AnsiConsole.MarkupLine("[cyan]📤 Fazendo upload final do banco de hashes...[/]");
-                await HashCacheManager.UploadDatabaseAsync();
             });
+        
+        await HashCacheManager.UploadDatabaseAsync();
     }
 
     private async Task ExportSinglePrefix(string prefixStr, string outputDir)

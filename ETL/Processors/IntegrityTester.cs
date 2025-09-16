@@ -88,7 +88,7 @@ public class IntegrityTester
         }
         finally
         {
-            try { ingestor.Dispose(); } catch { }
+            ingestor.Dispose();
         }
 
         // 4) Report
@@ -107,7 +107,7 @@ public class IntegrityTester
             AnsiConsole.MarkupLine($"[red]❌ {successCount}/{results.Count} CNPJs válidos; verifique divergências acima[/]");
 
         // 5) Cleanup
-        try { Directory.Delete(tempRoot, true); } catch { }
+        Directory.Delete(tempRoot, true);
     }
 
     private static string ComputeHash(string json)

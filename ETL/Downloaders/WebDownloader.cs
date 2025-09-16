@@ -163,6 +163,22 @@ public class WebDownloader
     {
         Directory.CreateDirectory(targetDir);
 
+        // Se já existem arquivos extraídos (CSV-like) com os padrões da RFB, pula a extração
+        string[] extractedPatterns = [
+            "*EMPRECSV*", "*ESTABELE*", "*SOCIOCSV*", "*SIMPLES*",
+            "*CNAECSV*", "*MOTICSV*", "*MUNICCSV*", "*NATJUCSV*",
+            "*PAISCSV*", "*QUALSCSV*"
+        ];
+
+        var hasExtractedAlready = extractedPatterns.Any(p =>
+            Directory.EnumerateFiles(targetDir, p, SearchOption.AllDirectories).Any());
+
+        if (hasExtractedAlready)
+        {
+            AnsiConsole.MarkupLine("[blue]ℹ️ Arquivos já extraídos encontrados; pulando extração.[/]");
+            return;
+        }
+
         await AnsiConsole.Progress().StartAsync(async ctx =>
         {
             foreach (var zip in zipFiles)

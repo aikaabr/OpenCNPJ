@@ -33,22 +33,34 @@ public static class HashCacheManager
 
         var tempDir = Path.Combine(Path.GetTempPath(), $"hash_download_{Guid.NewGuid():N}");
         Directory.CreateDirectory(tempDir);
-        
+
         try
         {
             var zipFileName = "hashes.zip";
             var tempZipPath = Path.Combine(tempDir, zipFileName);
-            
+
             var success = await RcloneClient.DownloadFileAsync(zipFileName, tempZipPath);
-            
+
             if (success && File.Exists(tempZipPath))
             {
-                System.IO.Compression.ZipFile.ExtractToDirectory(tempZipPath, Path.GetDirectoryName(_dbPath)!);
-                
-                if (File.Exists(_dbPath))
+                await DbSemaphore.WaitAsync();
+                try
                 {
-                    AnsiConsole.MarkupLine("[green]✓ Banco de hashes baixado e descompactado com sucesso[/]");
-                    return true;
+                    ZipFile.ExtractToDirectory(
+                        tempZipPath,
+                        Path.GetDirectoryName(_dbPath)!,
+                        overwriteFiles: true
+                    );
+
+                    if (File.Exists(_dbPath))
+                    {
+                        AnsiConsole.MarkupLine("[green]✓ Banco de hashes baixado e descompactado com sucesso[/]");
+                        return true;
+                    }
+                }
+                finally
+                {
+                    DbSemaphore.Release();
                 }
             }
         }
@@ -56,14 +68,10 @@ public static class HashCacheManager
         {
             if (Directory.Exists(tempDir))
             {
-                try
-                {
-                    Directory.Delete(tempDir, true);
-                }
-                catch { }
+                Directory.Delete(tempDir, true);
             }
         }
-        
+
         AnsiConsole.MarkupLine("[yellow]⚠️ Banco de hashes não encontrado no Storage, criando novo...[/]");
         return false;
     }
@@ -71,13 +79,13 @@ public static class HashCacheManager
     public static async ValueTask InitializeDatabase()
     {
         if (_initialized) return;
-        
+
         Directory.CreateDirectory(Path.GetDirectoryName(_dbPath)!);
-        
-        //await EnsureDatabaseExists();
-        
+
+        await EnsureDatabaseExists();
+
         var connectionString = $"Data Source={_dbPath};Mode=ReadWriteCreate;Cache=Shared;";
-        
+
         _connection = new(connectionString);
         _connection.Open();
 
@@ -91,7 +99,7 @@ public static class HashCacheManager
             
         ";
         cmd.ExecuteNonQuery();
-        
+
         OptimizeDatabase();
         _initialized = true;
     }
@@ -115,51 +123,52 @@ public static class HashCacheManager
         {
             await InitializeDatabase();
         }
-        
+
         var newCount = 0;
         var updateCount = 0;
-        
+
         const int checkBatchSize = 500; // Reduzido para garantir segurança com SQLite
-        
+
         // Serializa acesso ao banco SQLite para evitar conflitos de transação
         await DbSemaphore.WaitAsync();
         try
         {
             foreach (var batch in items.Chunk(checkBatchSize))
-        {
-            var placeholders = string.Join(",", batch.Select((_, idx) => $"@p{idx}"));
-            
-            await using var cmd = _connection.CreateCommand();
-            cmd.CommandText = $"SELECT cnpj, hash FROM hashes WHERE cnpj IN ({placeholders})";
+            {
+                var placeholders = string.Join(",", batch.Select((_, idx) => $"@p{idx}"));
 
-            for (var j = 0; j < batch.Length; j++)
-                cmd.Parameters.AddWithValue($"@p{j}", batch[j].Cnpj);
-            
-            var existingHashes = new Dictionary<string, string>();
-            await using var reader = await cmd.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                existingHashes[reader.GetString(0)] = reader.GetString(1);
-            }
-            
-            foreach (var item in batch)
-            {
-                if (!existingHashes.TryGetValue(item.Cnpj, out var existingHash))
+                await using var cmd = _connection.CreateCommand();
+                cmd.CommandText = $"SELECT cnpj, hash FROM hashes WHERE cnpj IN ({placeholders})";
+
+                for (var j = 0; j < batch.Length; j++)
+                    cmd.Parameters.AddWithValue($"@p{j}", batch[j].Cnpj);
+
+                var existingHashes = new Dictionary<string, string>();
+                await using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
                 {
-                    newCount++;
-                    yield return item;
+                    existingHashes[reader.GetString(0)] = reader.GetString(1);
                 }
-                else if (existingHash != item.Hash)
+
+                foreach (var item in batch)
                 {
-                    updateCount++;
-                    yield return item;
+                    if (!existingHashes.TryGetValue(item.Cnpj, out var existingHash))
+                    {
+                        newCount++;
+                        yield return item;
+                    }
+                    else if (existingHash != item.Hash)
+                    {
+                        updateCount++;
+                        yield return item;
+                    }
                 }
-            }
             }
 
             if (newCount > 0 || updateCount > 0)
             {
-                AnsiConsole.MarkupLine($"[cyan]📊 {newCount} novos CNPJs para inserir, {updateCount} CNPJs para atualizar[/]");
+                AnsiConsole.MarkupLine(
+                    $"[cyan]📊 {newCount} novos CNPJs para inserir, {updateCount} CNPJs para atualizar[/]");
             }
         }
         finally
@@ -171,7 +180,7 @@ public static class HashCacheManager
     public static async ValueTask AddAsync(string cnpj, string hash)
     {
         await InitializeDatabase();
-        
+
         if (_currentTransaction == null)
         {
             _currentTransaction = _connection.BeginTransaction();
@@ -185,11 +194,11 @@ public static class HashCacheManager
         ";
         cmd.Parameters.AddWithValue("@cnpj", cnpj);
         cmd.Parameters.AddWithValue("@hash", hash);
-        
+
         await cmd.ExecuteNonQueryAsync();
-        
+
         _pendingInserts++;
-        
+
         if (_pendingInserts >= BatchSize)
         {
             await CommitBatchAsync();
@@ -205,6 +214,7 @@ public static class HashCacheManager
             {
                 await AddAsync(item.Cnpj, item.Hash);
             }
+
             await CommitBatchAsync();
         }
         finally
@@ -212,60 +222,71 @@ public static class HashCacheManager
             DbSemaphore.Release();
         }
     }
-    
+
     public static async ValueTask<bool> UploadDatabaseAsync()
     {
+        await DbSemaphore.WaitAsync();
         await CommitBatchAsync();
-        
-        AnsiConsole.MarkupLine("[cyan]📤 Fazendo upload do banco de hashes...[/]");
-        
-        var tempDir = Path.Combine(Path.GetTempPath(), $"hash_upload_{Guid.NewGuid():N}");
-        Directory.CreateDirectory(tempDir);
-        
+
         try
         {
-            var zipFileName = "hashes.zip";
-            var zipPath = Path.Combine(tempDir, zipFileName);
-            
-            // Fecha todas as conexões antes de tentar comprimir
-            CloseConnections();
-            
-            AnsiConsole.MarkupLine("[cyan]🗃️ Compactando banco de dados...[/]");
-            
-            using (var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
+            AnsiConsole.MarkupLine("[cyan]📤 Fazendo upload do banco de hashes...[/]");
+
+            var tempDir = Path.Combine(Path.GetTempPath(), $"hash_upload_{Guid.NewGuid():N}");
+            Directory.CreateDirectory(tempDir);
+
+            try
             {
-                archive.CreateEntryFromFile(_dbPath, Path.GetFileName(_dbPath), CompressionLevel.Optimal);
+                var zipFileName = "hashes.zip";
+                var zipPath = Path.Combine(tempDir, zipFileName);
+                var tempDbCopyPath = Path.Combine(tempDir, Path.GetFileName(_dbPath));
+
+                CloseConnections();
+
+                AnsiConsole.MarkupLine("[cyan]🗃️ Compactando banco de dados...[/]");
+
+                if (File.Exists(zipPath))
+                    File.Delete(zipPath);
+
+                File.Copy(_dbPath, tempDbCopyPath, true);
+
+                using (var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
+                {
+                    archive.CreateEntryFromFile(tempDbCopyPath, Path.GetFileName(_dbPath), CompressionLevel.Optimal);
+                }
+
+                AnsiConsole.MarkupLine(
+                    $"[cyan]📦 Banco compactado: {new FileInfo(zipPath).Length / 1024 / 1024:N1} MB[/]");
+
+                var success = await RcloneClient.UploadFolderAsync(tempDir);
+
+                if (success)
+                    AnsiConsole.MarkupLine("[green]✓ Banco de hashes enviado para Storage[/]");
+                else
+                    AnsiConsole.MarkupLine("[yellow]⚠️ Falha ao enviar banco de hashes[/]");
+
+                return success;
             }
-            
-            AnsiConsole.MarkupLine($"[cyan]📦 Banco compactado: {new FileInfo(zipPath).Length / 1024 / 1024:N1} MB[/]");
-            
-            var success = await RcloneClient.UploadFolderAsync(tempDir);
-            
-            if (success)
+            finally
             {
-                AnsiConsole.MarkupLine("[green]✓ Banco de hashes enviado para Storage[/]");
+                if (Directory.Exists(tempDir))
+                {
+                    try
+                    {
+                        Directory.Delete(tempDir, true);
+                        AnsiConsole.MarkupLine("[cyan]🧹 Diretório temporário removido[/]");
+                    }
+                    catch (Exception ex)
+                    {
+                        AnsiConsole.MarkupLine(
+                            $"[yellow]⚠️ Erro ao remover diretório temporário: {ex.Message.EscapeMarkup()}[/]");
+                    }
+                }
             }
-            else
-            {
-                AnsiConsole.MarkupLine("[yellow]⚠️ Falha ao enviar banco de hashes[/]");
-            }
-            
-            return success;
         }
         finally
         {
-            if (Directory.Exists(tempDir))
-            {
-                try
-                {
-                    Directory.Delete(tempDir, true);
-                    AnsiConsole.MarkupLine("[cyan]🧹 Diretório temporário removido[/]");
-                }
-                catch (Exception ex)
-                {
-                    AnsiConsole.MarkupLine($"[yellow]⚠️ Erro ao remover diretório temporário: {ex.Message.EscapeMarkup()}[/]");
-                }
-            }
+            DbSemaphore.Release();
         }
     }
 
@@ -281,24 +302,12 @@ public static class HashCacheManager
         }
     }
 
-
-    public static async ValueTask<long> GetCountAsync()
-    {
-        await InitializeDatabase();
-
-        await using var cmd = _connection.CreateCommand();
-        cmd.CommandText = "SELECT COUNT(*) FROM hashes";
-        var result = await cmd.ExecuteScalarAsync();
-        return Convert.ToInt64(result);
-    }
-
-
     public static void CloseConnections()
     {
-        CommitBatchAsync().GetAwaiter().GetResult();
         _currentTransaction?.Dispose();
         _connection?.Close();
         _connection?.Dispose();
+
         _connection = null;
         _initialized = false;
     }

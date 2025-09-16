@@ -18,7 +18,7 @@ public sealed class PipelineCommand : AsyncCommand<PipelineSettings>
 {
     public override async Task<int> ExecuteAsync(CommandContext context, PipelineSettings settings)
     {
-        var month = settings.Month ?? DateTime.Now.AddMonths(-1).ToString("yyyy-MM");
+        var month = settings.Month ?? DateTime.Now.ToString("yyyy-MM");
 
         AnsiConsole.MarkupLine($"[cyan]1/6 Baixando dados de {month}...[/]");
         var downloader = new WebDownloader(AppConfig.Current.Paths.DownloadDir, AppConfig.Current.Paths.DataDir);

@@ -76,7 +76,7 @@ public class NdjsonProcessor
 
         var tempDir = Path.Combine(Path.GetDirectoryName(ndjsonFilePath) ?? ".",
             Path.GetFileNameWithoutExtension(ndjsonFilePath));
-        
+
         Directory.CreateDirectory(tempDir);
 
         try
@@ -85,6 +85,9 @@ public class NdjsonProcessor
 
             if (allProcessedItems.Count == 0)
             {
+                task.MaxValue = 1;
+                task.Increment(1);
+
                 AnsiConsole.MarkupLine($"[green]Nenhuma alteração em {Path.GetFileName(ndjsonFilePath)}[/]");
                 return;
             }
@@ -104,7 +107,7 @@ public class NdjsonProcessor
             task.Description = $"[yellow]📤 Preparando upload de {allProcessedItems.Count} arquivos...[/]";
             task.MaxValue = 100;
             task.Value = 0;
-            
+
             var success = await RcloneClient.UploadFolderAsync(tempDir, progressTask: task);
 
             if (success)
@@ -120,7 +123,7 @@ public class NdjsonProcessor
                 Directory.Delete(tempDir, true);
         }
     }
-    
+
     private (string? cnpj, string json) ExtractCnpjAndJson(string jsonLine)
     {
         try
