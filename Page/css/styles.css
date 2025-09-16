@@ -5,6 +5,7 @@
   --accent:#22B8CF;  /* cyan (slightly dimmed) */
   --highlight:#34D399; /* emerald */
   --sponsor:#EA4AAA; /* GitHub Sponsors pink */
+  --warning:#F59E0B; /* amber */
 
   /* Dark palette */
   --bg:#0B1220;            /* page background */
@@ -83,10 +84,31 @@ input:not([type]){
   font-size:16px;
 }
 #cnpj{width:100%}
-.actions{display:flex;align-items:center;gap:12px}
+.actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .hint{color:var(--muted);margin:0;font-size:14px}
 /* Download block spacing */
 .download-block{margin-top:10px}
+/* ZIP size badge and note */
+.badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(34,184,207,.12);
+  color:var(--accent);
+  border:1px solid rgba(34,184,207,.35);
+  padding:6px 10px;
+  border-radius:999px;
+  font-weight:600;
+  font-size:14px;
+}
+.note{color:var(--muted);margin:6px 0 0;font-size:14px}
+.size-note strong{color:var(--neutral)}
+
+/* Alert styles */
+.alert{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,.02);color:var(--neutral);margin-top:8px}
+.alert .icon{width:18px;height:18px;margin-top:2px;flex:0 0 auto}
+.alert.warning{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.35)}
+.alert.warning .icon{color:var(--warning)}
+.alert.info{background:rgba(34,184,207,.12);border-color:rgba(34,184,207,.35)}
+.alert.info .icon{color:var(--accent)}
 
 .btn{
   appearance:none;border:1px solid var(--border);background:var(--surface);color:var(--neutral);

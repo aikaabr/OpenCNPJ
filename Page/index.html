@@ -149,12 +149,29 @@ curl -s "https://api.opencnpj.org/00.000.000/000000" | jq</pre>
           <p id="zip-desc">Prefere trabalhar offline ou integrar localmente? Baixe a base completa de CNPJs em um único arquivo ZIP e processe no seu próprio ambiente. O pacote é atualizado mensalmente, em formato aberto.</p>
           <div class="actions">
             <a id="zip-download" class="btn primary" href="#" target="_blank" rel="noopener" download>Baixar base completa (.zip)</a>
-            <span class="hint" id="zip-size">—</span>
+            <span id="zip-size" class="badge">Tamanho: —</span>
+          </div>
+          <div class="alert warning" role="note" aria-label="Aviso sobre tamanho descompactado">
+            <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+              <path d="M1 21h22L12 2 1 21zm12-3h-2v2h2v-2zm0-8h-2v6h2V10z"/>
+            </svg>
+            <div>
+              <strong>Aviso:</strong> após descompactar, o volume esperado é de aproximadamente <strong>550 GB</strong>.
+            </div>
           </div>
           <p class="api-meta">
             <strong>URL:</strong> <a id="zip-url" href="#" target="_blank" rel="noopener">—</a><br/>
             <strong>MD5:</strong> <code id="zip-md5">—</code>
           </p>
+        </div>
+
+        <div class="alert info" role="note" aria-label="Automatize o download da base">
+          <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+            <path d="M11 7h2v2h-2V7zm0 4h2v6h-2v-6zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+          </svg>
+          <div>
+            Caso decida por hostear a base você mesmo e quer automatizar o fluxo de atualização, acesse <a href="https://api.opencnpj.org/info" target="_blank" rel="noopener">https://api.opencnpj.org/info</a>. O retorno contém a data da última atualização, a URL do ZIP para download e o MD5 para verificação.
+          </div>
         </div>
       </section>
 
