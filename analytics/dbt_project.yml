@@ -1,0 +1,82 @@
+name: "opencnpj_analytics"
+version: "1.0.0"
+
+# This setting configures which "profile" dbt uses for this project.
+profile: "opencnpj_analytics"
+
+# These configurations specify where dbt should look for different types of files.
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+# Configuring models
+models:
+  opencnpj_analytics:
+    # Staging models - raw data cleaned and standardized
+    staging:
+      +materialized: view
+      +docs:
+        node_color: "#f0f8ff"
+
+    # Intermediate models - business logic transformations
+    intermediate:
+      +materialized: view
+      +docs:
+        node_color: "#e6f3ff"
+
+    # Marts - final business datasets
+    marts:
+      +materialized: table
+      +docs:
+        node_color: "#cce7ff"
+
+      # Core business entities
+      core:
+        +materialized: table
+
+      # G2Market specific analytics
+      g2market:
+        +materialized: table
+        +docs:
+          node_color: "#b3d9ff"
+
+# Test configurations
+tests:
+  +store_failures: true
+
+# Documentation
+docs:
+  generate: true
+
+# Variables
+vars:
+  # Source data configuration
+  source_database: "/app/data/cnpj.duckdb"
+
+  # Date partitioning
+  start_date: "2020-01-01"
+
+  # Processing configurations
+  batch_size: 100000
+
+  # G2Market analysis parameters
+  min_company_capital: 10000
+  focus_sectors:
+    - "technology"
+    - "manufacturing"
+    - "services"
+    - "retail"
+
+# Snapshots
+snapshots:
+  opencnpj_analytics:
+    +strategy: timestamp
+    +updated_at: updated_at

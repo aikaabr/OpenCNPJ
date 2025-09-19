@@ -1,0 +1,166 @@
+version: 2
+
+sources:
+  - name: opencnpj_raw
+    description: "Raw CNPJ data from OpenCNPJ ETL pipeline"
+    database: "{{ var('source_database') }}"
+
+    tables:
+      - name: empresa
+        description: "Empresas (companies) - basic company information"
+        columns:
+          - name: cnpj_basico
+            description: "First 8 digits of CNPJ"
+            tests:
+              - not_null
+              - unique
+          - name: razao_social
+            description: "Company legal name"
+          - name: natureza_juridica
+            description: "Legal nature code"
+          - name: qualificacao_responsavel
+            description: "Responsible person qualification code"
+          - name: capital_social
+            description: "Company social capital"
+          - name: porte_empresa
+            description: "Company size code"
+          - name: ente_federativo
+            description: "Federative entity code"
+
+      - name: estabelecimento
+        description: "Estabelecimentos (establishments) - company locations and details"
+        columns:
+          - name: cnpj_basico
+            description: "First 8 digits of CNPJ"
+            tests:
+              - not_null
+          - name: cnpj_ordem
+            description: "CNPJ order (digits 9-12)"
+          - name: cnpj_dv
+            description: "CNPJ verification digits (13-14)"
+          - name: identificador_matriz_filial
+            description: "1=Headquarters, 2=Branch"
+          - name: nome_fantasia
+            description: "Trade name"
+          - name: situacao_cadastral
+            description: "Registration status code"
+          - name: data_situacao_cadastral
+            description: "Registration status date"
+          - name: motivo_situacao_cadastral
+            description: "Registration status reason code"
+          - name: data_inicio_atividade
+            description: "Activity start date"
+          - name: cnae_principal
+            description: "Primary CNAE code"
+          - name: cnaes_secundarios
+            description: "Secondary CNAE codes"
+          - name: uf
+            description: "State code"
+          - name: codigo_municipio
+            description: "Municipality code"
+          - name: correio_eletronico
+            description: "Email address"
+
+      - name: socio
+        description: "Sócios (partners) - company partners and ownership"
+        columns:
+          - name: cnpj_basico
+            description: "First 8 digits of CNPJ"
+            tests:
+              - not_null
+          - name: identificador_socio
+            description: "Partner type identifier"
+          - name: nome_socio
+            description: "Partner name"
+          - name: cnpj_cpf_socio
+            description: "Partner CNPJ/CPF"
+          - name: qualificacao_socio
+            description: "Partner qualification code"
+          - name: data_entrada_sociedade
+            description: "Partnership start date"
+
+      - name: simples
+        description: "Simples Nacional - tax regime information"
+        columns:
+          - name: cnpj_basico
+            description: "First 8 digits of CNPJ"
+            tests:
+              - not_null
+          - name: opcao_simples
+            description: "Simples option (S/N)"
+          - name: data_opcao_simples
+            description: "Simples option date"
+          - name: data_exclusao_simples
+            description: "Simples exclusion date"
+          - name: opcao_mei
+            description: "MEI option (S/N)"
+          - name: data_opcao_mei
+            description: "MEI option date"
+          - name: data_exclusao_mei
+            description: "MEI exclusion date"
+
+      - name: cnae
+        description: "CNAE codes - economic activity classification"
+        columns:
+          - name: codigo
+            description: "CNAE code"
+            tests:
+              - not_null
+              - unique
+          - name: descricao
+            description: "CNAE description"
+
+      - name: municipio
+        description: "Municipalities"
+        columns:
+          - name: codigo
+            description: "Municipality code"
+            tests:
+              - not_null
+              - unique
+          - name: descricao
+            description: "Municipality name"
+
+      - name: natureza
+        description: "Legal nature codes"
+        columns:
+          - name: codigo
+            description: "Legal nature code"
+            tests:
+              - not_null
+              - unique
+          - name: descricao
+            description: "Legal nature description"
+
+      - name: qualificacao
+        description: "Qualification codes"
+        columns:
+          - name: codigo
+            description: "Qualification code"
+            tests:
+              - not_null
+              - unique
+          - name: descricao
+            description: "Qualification description"
+
+      - name: pais
+        description: "Country codes"
+        columns:
+          - name: codigo
+            description: "Country code"
+            tests:
+              - not_null
+              - unique
+          - name: descricao
+            description: "Country name"
+
+      - name: motivo
+        description: "Registration status reason codes"
+        columns:
+          - name: codigo
+            description: "Reason code"
+            tests:
+              - not_null
+              - unique
+          - name: descricao
+            description: "Reason description"

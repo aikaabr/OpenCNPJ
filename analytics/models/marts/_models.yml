@@ -1,0 +1,49 @@
+version: 2
+
+models:
+  - name: stg_empresas
+    description: "Staged company data with data quality improvements and standardization"
+    columns:
+      - name: cnpj_basico
+        description: "First 8 digits of CNPJ - company identifier"
+        tests:
+          - not_null
+          - unique
+
+  - name: stg_estabelecimentos
+    description: "Staged establishment data with geocoding and business activity classification"
+    columns:
+      - name: cnpj_completo
+        description: "Complete 14-digit CNPJ"
+        tests:
+          - not_null
+
+  - name: int_empresas_completo
+    description: "Comprehensive company view combining all relevant business data"
+
+  - name: segmentacao_empresas
+    description: "G2Market segmentation analysis with scoring and recommendations"
+    columns:
+      - name: segmento_g2market
+        description: "G2Market potential segment classification"
+      - name: score_g2market
+        description: "Numeric score (0-100) for G2Market potential"
+      - name: acao_recomendada
+        description: "Recommended action for sales/marketing approach"
+
+  - name: distribuicao_geografica_setorial
+    description: "Geographic and sector distribution analysis for market planning"
+
+  - name: oportunidades_mercado
+    description: "Market opportunity analysis with entry strategy recommendations"
+    columns:
+      - name: classificacao_oportunidade
+        description: "Market opportunity classification level"
+      - name: estrategia_entrada
+        description: "Recommended market entry strategy"
+
+  - name: kpis_dashboard
+    description: "Key performance indicators for executive dashboard"
+
+  - name: dim_empresas
+    description: "Core company dimension table for general analytics"

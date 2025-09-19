@@ -6,6 +6,7 @@ public class AppConfig
 {
     public PathsConfig Paths { get; set; } = new();
     public RcloneSettings Rclone { get; set; } = new();
+    public StorageSettings Storage { get; set; } = new();
     public DuckDbSettings DuckDb { get; set; } = new();
     public NdjsonSettings Ndjson { get; set; } = new();
     public DownloaderSettings Downloader { get; set; } = new();
@@ -24,6 +25,28 @@ public class AppConfig
         public string RemoteBase { get; set; } = string.Empty;
         public int Transfers { get; set; } = 0;
         public int MaxConcurrentUploads { get; set; } = 0;
+    }
+
+    public class StorageSettings
+    {
+        public string Type { get; set; } = "rclone"; // "rclone", "filesystem", "s3"
+        public bool Enabled { get; set; } = true;
+        public FileSystemStorageSettings FileSystem { get; set; } = new();
+        public S3StorageSettings S3 { get; set; } = new();
+    }
+
+    public class FileSystemStorageSettings
+    {
+        public string OutputPath { get; set; } = "./output";
+    }
+
+    public class S3StorageSettings
+    {
+        public string BucketName { get; set; } = string.Empty;
+        public string Region { get; set; } = string.Empty;
+        public string AccessKey { get; set; } = string.Empty;
+        public string SecretKey { get; set; } = string.Empty;
+        public string Prefix { get; set; } = string.Empty;
     }
 
     public class DuckDbSettings

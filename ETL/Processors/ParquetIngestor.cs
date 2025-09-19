@@ -244,9 +244,17 @@ public class ParquetIngestor : IDisposable
         AnsiConsole.MarkupLine("[cyan]Carregando tabelas Parquet para memória...[/]");
         await LoadParquetTablesForConnection(_connection);
 
-        AnsiConsole.MarkupLine("[cyan]🚀 Iniciando export + upload integrado para Storage...[/]");
+        var exporter = await StorageExporterFactory.CreateAsync();
+        if (exporter == null)
+        {
+            AnsiConsole.MarkupLine("[yellow]⚠️ Nenhum storage exporter disponível. Dados serão processados localmente apenas.[/]");
+        }
+        else
+        {
+            AnsiConsole.MarkupLine($"[cyan]🚀 Iniciando export + upload integrado para Storage ({exporter.Name})...[/]");
+        }
 
-        await ExportToNdjsonPartitioned(outputDir);
+        await ExportToNdjsonPartitioned(outputDir, exporter);
 
         AnsiConsole.MarkupLine("[green]🎉 Export + upload integrado concluído![/]");
     }
@@ -293,7 +301,7 @@ public class ParquetIngestor : IDisposable
         }
     }
 
-    private async Task ExportToNdjsonPartitioned(string outputDir)
+    private async Task ExportToNdjsonPartitioned(string outputDir, IStorageExporter? exporter = null)
     {
         var prefixesToProcess = Enumerable.Range(0, 100).ToList();
 
@@ -328,7 +336,7 @@ public class ParquetIngestor : IDisposable
                         if (File.Exists(ndjsonFile))
                         {
                             prefixTask.Description = $"[blue]Processando {prefixStr}.ndjson...[/]";
-                            await _ndjsonProcessor.ProcessNdjsonFileToStorage(ndjsonFile, prefixTask);
+                            await _ndjsonProcessor.ProcessNdjsonFileToStorage(ndjsonFile, prefixTask, exporter);
 
                             File.Delete(ndjsonFile);
                             prefixTask.Description = $"[green]✓ {prefixStr}.ndjson concluído[/]";
@@ -348,14 +356,14 @@ public class ParquetIngestor : IDisposable
                         AnsiConsole.WriteException(ex, new ExceptionSettings
                         {
                             Format = ExceptionFormats.ShortenEverything,
-                            
+
                         });
 
                         mainTask.Increment(1);
                     }
                 });
             });
-        
+
         await HashCacheManager.UploadDatabaseAsync();
     }
 
@@ -426,7 +434,7 @@ public class ParquetIngestor : IDisposable
 
             if (result != null && result.ToString() != "")
             {
-                var jsonContent = JsonCleanupUtils.CleanJsonSpaces(result.ToString());
+                var jsonContent = JsonCleanupUtils.CleanJsonSpaces(result.ToString() ?? "");
 
                 await File.WriteAllTextAsync(outputFile, jsonContent);
 
@@ -529,15 +537,23 @@ public class ParquetIngestor : IDisposable
             var localInfoPath = Path.Combine(tempDir, "info.json");
             await File.WriteAllTextAsync(localInfoPath, json, Encoding.UTF8);
 
-            AnsiConsole.MarkupLine("[cyan]📤 Enviando info.json para Storage...[/]");
-            var ok = await RcloneClient.UploadFileAsync(localInfoPath, "info.json");
-            if (ok)
+            var exporter = await StorageExporterFactory.CreateAsync();
+            if (exporter != null)
             {
-                AnsiConsole.MarkupLine("[green]✓ info.json enviado para Storage[/]");
+                AnsiConsole.MarkupLine($"[cyan]📤 Enviando info.json para Storage ({exporter.Name})...[/]");
+                var ok = await exporter.UploadFileAsync(localInfoPath, "info.json");
+                if (ok)
+                {
+                    AnsiConsole.MarkupLine("[green]✓ info.json enviado para Storage[/]");
+                }
+                else
+                {
+                    AnsiConsole.MarkupLine("[red]❌ Falha ao enviar info.json para Storage[/]");
+                }
             }
             else
             {
-                AnsiConsole.MarkupLine("[red]❌ Falha ao enviar info.json para Storage[/]");
+                AnsiConsole.MarkupLine("[yellow]⚠️ info.json criado localmente (storage desabilitado)[/]");
             }
         }
         catch (Exception ex)

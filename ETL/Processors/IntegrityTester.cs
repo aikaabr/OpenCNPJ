@@ -64,10 +64,20 @@ public class IntegrityTester
                             localJson = JsonCleanupUtils.CleanJsonSpaces(localJson);
                             var localHash = ComputeHash(localJson);
 
-                            // 3b) Baixar JSON do Storage via rclone
-                            var ok = await RcloneClient.DownloadFileAsync($"{cnpj}.json", remotePath);
+                            // 3b) Baixar JSON do Storage
+                            var exporter = await StorageExporterFactory.CreateAsync();
+                            bool ok = false;
+
+                            if (exporter != null)
+                            {
+                                ok = await exporter.DownloadFileAsync($"{cnpj}.json", remotePath);
+                            }
+
                             if (!ok || !File.Exists(remotePath))
-                                throw new("Download via rclone falhou ou arquivo não existe no Storage");
+                            {
+                                var exporterName = exporter?.Name ?? "nenhum";
+                                throw new($"Download via {exporterName} falhou ou arquivo não existe no Storage");
+                            }
 
                             var remoteJson = await File.ReadAllTextAsync(remotePath);
                             remoteJson = JsonCleanupUtils.CleanJsonSpaces(remoteJson);

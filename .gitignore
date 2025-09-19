@@ -64,9 +64,145 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# OpenCNPJ data outputs
+# Python environments and packages
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+.coverage
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# pipx environments (isolated Python packages)
+.local/
+pipx_shared/
+
+# dbt
+dbt_packages/
+target/
+profiles.yml
+.user.yml
+manifest.json
+run_results.json
+catalog.json
+
+# DuckDB databases and data files
+*.db
+*.duckdb
+*.duckdb.wal
+
+# OpenCNPJ data directories
+data/
+downloads/
+extracted_data/
 parquet_data/
-download_data/
-output_data/
+cnpj_ndjson/
+output/
+hash_cache/
+upload/
 temp/
+tmp/
+
+# Legacy Docker files (removed from project)
+Dockerfile*
+docker-compose*.yml
+docker/
+
+# Rclone configuration (sensitive)
+.rclone/
+rclone.conf
+
+# Environment files with sensitive data
+.env.local
+.env.production
+.env.staging
+*.key
+*.pem
+
+# Backup and temporary files
+*.backup
+*.bak
 *.tmp
+*.temp
+*~
+.#*
+\#*#
+
+# Logs
+*.log
+logs/
+
+# Archive files
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Large data files
+*.parquet
+*.ndjson
+*.jsonl
+*.csv.gz
+
+# JDBC drivers and external libraries
+drivers/
+libs/
+vendor/
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.DS_Store?
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# Analytics and monitoring data
+analytics.duckdb*
+monitoring/
+metrics/
+
+# Documentation builds
+docs/_build/
+site/
+
+# Configuration overrides
+config.local.json
+settings.local.json

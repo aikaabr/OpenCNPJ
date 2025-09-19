@@ -1,0 +1,51 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+*.md
+
+# Build artifacts
+**/bin
+**/obj
+**/Debug
+**/Release
+
+# Data directories
+**/extracted_data
+**/parquet_data
+**/cnpj_ndjson
+**/downloads
+**/hash_cache
+**/output
+**/temp
+
+# IDE
+.vs
+.vscode
+*.suo
+*.user
+*.userprefs
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Analytics
+analytics/logs/
+analytics/target/
+analytics/dbt_packages/
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Other
+*.log
+*.cache
+node_modules/

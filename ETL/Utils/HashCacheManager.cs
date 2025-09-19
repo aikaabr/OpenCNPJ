@@ -39,7 +39,13 @@ public static class HashCacheManager
             var zipFileName = "hashes.zip";
             var tempZipPath = Path.Combine(tempDir, zipFileName);
 
-            var success = await RcloneClient.DownloadFileAsync(zipFileName, tempZipPath);
+            var exporter = await StorageExporterFactory.CreateAsync();
+            bool success = false;
+
+            if (exporter != null)
+            {
+                success = await exporter.DownloadFileAsync(zipFileName, tempZipPath);
+            }
 
             if (success && File.Exists(tempZipPath))
             {
@@ -258,12 +264,22 @@ public static class HashCacheManager
                 AnsiConsole.MarkupLine(
                     $"[cyan]📦 Banco compactado: {new FileInfo(zipPath).Length / 1024 / 1024:N1} MB[/]");
 
-                var success = await RcloneClient.UploadFolderAsync(tempDir);
+                var exporter = await StorageExporterFactory.CreateAsync();
+                bool success = false;
 
-                if (success)
-                    AnsiConsole.MarkupLine("[green]✓ Banco de hashes enviado para Storage[/]");
+                if (exporter != null)
+                {
+                    success = await exporter.UploadFolderAsync(tempDir);
+
+                    if (success)
+                        AnsiConsole.MarkupLine($"[green]✓ Banco de hashes enviado para Storage ({exporter.Name})[/]");
+                    else
+                        AnsiConsole.MarkupLine($"[yellow]⚠️ Falha ao enviar banco de hashes via {exporter.Name}[/]");
+                }
                 else
-                    AnsiConsole.MarkupLine("[yellow]⚠️ Falha ao enviar banco de hashes[/]");
+                {
+                    AnsiConsole.MarkupLine("[yellow]⚠️ Nenhum storage exporter disponível[/]");
+                }
 
                 return success;
             }

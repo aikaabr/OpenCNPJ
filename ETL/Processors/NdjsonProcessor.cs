@@ -64,7 +64,7 @@ public class NdjsonProcessor
         }
     }
 
-    public async Task ProcessNdjsonFileToStorage(string ndjsonFilePath, ProgressTask task)
+    public async Task ProcessNdjsonFileToStorage(string ndjsonFilePath, ProgressTask task, IStorageExporter? exporter = null)
     {
         var processedData = ReadAndProcessNdjson(ndjsonFilePath, task);
 
@@ -104,18 +104,28 @@ public class NdjsonProcessor
                 task.Increment(1);
             }
 
-            task.Description = $"[yellow]📤 Preparando upload de {allProcessedItems.Count} arquivos...[/]";
-            task.MaxValue = 100;
-            task.Value = 0;
+            if (exporter != null)
+            {
+                task.Description = $"[yellow]📤 Preparando upload de {allProcessedItems.Count} arquivos...[/]";
+                task.MaxValue = 100;
+                task.Value = 0;
 
-            var success = await RcloneClient.UploadFolderAsync(tempDir, progressTask: task);
+                var success = await exporter.UploadFolderAsync(tempDir, progressTask: task);
 
-            if (success)
-                await HashCacheManager.AddBatchAsync(allProcessedItems);
+                if (success)
+                {
+                    await HashCacheManager.AddBatchAsync(allProcessedItems);
+                    AnsiConsole.MarkupLine($"[green]✓ {allProcessedItems.Count} arquivos enviados com sucesso[/]");
+                }
+                else
+                {
+                    throw new("Falha no upload dos arquivos");
+                }
+            }
             else
-                throw new("Falha no upload dos arquivos");
-
-            AnsiConsole.MarkupLine($"[green]✓ {allProcessedItems.Count} arquivos enviados com sucesso[/]");
+            {
+                AnsiConsole.MarkupLine($"[yellow]⚠️ {allProcessedItems.Count} arquivos processados localmente (storage desabilitado)[/]");
+            }
         }
         finally
         {

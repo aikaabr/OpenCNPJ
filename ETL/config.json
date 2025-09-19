@@ -6,6 +6,20 @@
     "DownloadDir": "./downloads",
     "HashCacheDir": "./hash_cache"
   },
+  "Storage": {
+    "Type": "rclone",
+    "Enabled": true,
+    "FileSystem": {
+      "OutputPath": "./output"
+    },
+    "S3": {
+      "BucketName": "",
+      "Region": "",
+      "AccessKey": "",
+      "SecretKey": "",
+      "Prefix": ""
+    }
+  },
   "Rclone": {
     "RemoteBase": "Opencnpj:opencnpj/files",
     "Transfers": 100,
