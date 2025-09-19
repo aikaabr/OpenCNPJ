@@ -23,20 +23,14 @@ models:
     # Staging models - raw data cleaned and standardized
     staging:
       +materialized: view
-      +docs:
-        node_color: "#f0f8ff"
 
     # Intermediate models - business logic transformations
     intermediate:
       +materialized: view
-      +docs:
-        node_color: "#e6f3ff"
 
     # Marts - final business datasets
     marts:
       +materialized: table
-      +docs:
-        node_color: "#cce7ff"
 
       # Core business entities
       core:
@@ -45,16 +39,10 @@ models:
       # G2Market specific analytics
       g2market:
         +materialized: table
-        +docs:
-          node_color: "#b3d9ff"
 
 # Test configurations
 tests:
   +store_failures: true
-
-# Documentation
-docs:
-  generate: true
 
 # Variables
 vars:
@@ -74,9 +62,3 @@ vars:
     - "manufacturing"
     - "services"
     - "retail"
-
-# Snapshots
-snapshots:
-  opencnpj_analytics:
-    +strategy: timestamp
-    +updated_at: updated_at

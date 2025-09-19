@@ -186,7 +186,7 @@ Para executar os modelos automaticamente:
 
 ```bash
 # Via cron (exemplo diário às 6h)
-0 6 * * * cd /path/to/analytics && dbt run --target prod
+0 6 * * * cd /path/to/Analytics && dbt run --target prod
 
 # Via Docker Compose (uncomment no docker-compose.yml)
 command: ["dbt", "run", "--target", "prod"]

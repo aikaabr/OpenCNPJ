@@ -36,9 +36,9 @@ README.md
 .env.*.local
 
 # Analytics
-analytics/logs/
-analytics/target/
-analytics/dbt_packages/
+Analytics/logs/
+Analytics/target/
+Analytics/dbt_packages/
 
 # Docker
 Dockerfile*

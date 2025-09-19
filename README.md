@@ -16,7 +16,7 @@ Projeto aberto para baixar, processar e publicar dados públicos das empresas do
 
 - `ETL/`: Pipeline ETL que baixa, processa e publica dados do CNPJ
 - `Page/`: Página/SPA estática para consulta dos dados publicados
-- `analytics/`: Modelos dbt para análise de dados e business intelligence
+- `Analytics/`: Modelos dbt para análise de dados e business intelligence
 - `docker/`: Configurações Docker e arquivos de deployment
 
 ## 🛠 Requisitos
@@ -33,6 +33,43 @@ Projeto aberto para baixar, processar e publicar dados públicos das empresas do
 - Espaço em disco adequado para os dados
 
 ## ⚙️ Configuração
+
+O OpenCNPJ agora oferece configuração flexível e centralizada através de variáveis de ambiente. Para configuração detalhada, consulte o [CONFIGURATION.md](./CONFIGURATION.md).
+
+### 🚀 Configuração Rápida
+
+1. **Copie o arquivo de exemplo:**
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Configure o diretório base de dados:**
+   ```bash
+   # Edite o arquivo .env e defina o diretório base
+   OPENCNPJ_BASE_PATH=/caminho/para/seus/dados
+   ```
+
+3. **Valide a configuração:**
+   ```bash
+   cd ETL && dotnet run -- config
+   ```
+
+### 📁 Estrutura de Dados Configurável
+
+O sistema organiza automaticamente os dados em uma estrutura hierárquica:
+
+```
+OPENCNPJ_BASE_PATH/
+├── downloads/          # Downloads temporários da Receita Federal
+├── extracted_data/     # Dados extraídos dos ZIPs
+├── parquet_data/       # Arquivos Parquet processados
+├── output/            # Arquivos NDJSON finais
+├── hash_cache/        # Cache para evitar reprocessamento
+├── temp/              # Arquivos temporários
+├── logs/              # Logs do sistema
+├── backups/           # Backups automáticos
+└── config/            # Configurações específicas do ambiente
+```
 
 ### Storage Options
 
@@ -81,6 +118,29 @@ O projeto agora suporta múltiplas opções de storage:
     }
   }
 }
+```
+
+### Configuração via Variáveis de Ambiente
+
+O projeto suporta configuração flexível através de arquivo `.env`:
+
+```bash
+# Configuração básica para desenvolvimento
+OPENCNPJ_BASE_PATH=./data
+STORAGE_TYPE=filesystem
+DUCKDB_IN_MEMORY=true
+
+# Configuração para produção
+OPENCNPJ_BASE_PATH=/opt/opencnpj/data
+STORAGE_TYPE=s3
+S3_BUCKET_NAME=meu-bucket-opencnpj
+DUCKDB_IN_MEMORY=false
+DUCKDB_MEMORY_LIMIT=16GB
+```
+
+**Comando de diagnóstico:**
+```bash
+cd ETL && dotnet run -- config
 ```
 
 ### Configuração Docker
@@ -232,7 +292,7 @@ docker-compose logs -f opencnpj-etl
 ### Estrutura Analítica
 
 ```
-analytics/
+Analytics/
 ├── models/
 │   ├── staging/          # Dados limpos e padronizados
 │   ├── intermediate/     # Transformações de negócio
@@ -256,7 +316,7 @@ docker-compose exec opencnpj-analytics dbt run
 docker-compose exec opencnpj-analytics dbt test
 docker-compose exec opencnpj-analytics dbt docs generate
 
-# Local (dentro da pasta analytics)
+# Local (dentro da pasta Analytics)
 dbt run
 dbt test
 dbt docs generate && dbt docs serve

@@ -20,7 +20,7 @@ print_info() { echo -e "${BLUE}ℹ $1${NC}"; }
 # Directories
 BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
 ETL_DIR="$BASE_DIR/ETL"
-ANALYTICS_DIR="$BASE_DIR/analytics"
+ANALYTICS_DIR="$BASE_DIR/Analytics"
 WEB_DIR="$BASE_DIR/Page"
 
 # Load environment
